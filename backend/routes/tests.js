@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require('../db'); // Promise-based pool from db.js
+const pool = require('../db'); // PostgreSQL pool
 const {
   authenticateToken,
   authorizeRoles,
@@ -23,12 +23,12 @@ router.post(
         .json({ message: "Test title and questions are required" });
     }
 
-    const connection = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
-      const [testResult] = await connection.query(
-        "INSERT INTO tests (title, description, teacher_id, test_link, duration_minutes) VALUES (?, ?, ?, ?, ?)",
+      const testResult = await client.query(
+        "INSERT INTO tests (title, description, teacher_id, test_link, duration_minutes) VALUES ($1, $2, $3, $4, $5) RETURNING id",
         [
           title,
           description,
@@ -38,11 +38,11 @@ router.post(
         ]
       );
 
-      const testId = testResult.insertId;
+      const testId = testResult.rows[0].id;
 
       for (const q of questions) {
-        await connection.query(
-          "INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        await client.query(
+          "INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES ($1, $2, $3, $4, $5, $6, $7)",
           [
             testId,
             q.question_text,
@@ -55,15 +55,15 @@ router.post(
         );
       }
 
-      await connection.commit();
+      await client.query('COMMIT');
       res
         .status(201)
         .json({ message: "Test created successfully", test_id: testId });
     } catch (err) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       res.status(500).json({ error: err.message });
     } finally {
-      connection.release();
+      client.release();
     }
   }
 );
@@ -71,17 +71,17 @@ router.post(
 router.get("/:link", authenticateToken, async (req, res) => {
   const link = req.params.link;
   try {
-    const [testRows] = await pool.query(
-      "SELECT * FROM tests WHERE test_link = ?",
+    const testResult = await pool.query(
+      "SELECT * FROM tests WHERE test_link = $1",
       [link]
     );
-    if (testRows.length === 0)
+    if (testResult.rows.length === 0)
       return res.status(404).json({ message: "Test not found" });
 
-    const test = testRows[0];
+    const test = testResult.rows[0];
 
-    const [questions] = await pool.query(
-      "SELECT id, question_text, option_a, option_b, option_c, option_d FROM questions WHERE test_id = ?",
+    const questionsResult = await pool.query(
+      "SELECT id, question_text, option_a, option_b, option_c, option_d FROM questions WHERE test_id = $1",
       [test.id]
     );
 
@@ -90,7 +90,7 @@ router.get("/:link", authenticateToken, async (req, res) => {
         id: test.id,
         title: test.title,
         duration_minutes: test.duration_minutes,
-        questions,
+        questions: questionsResult.rows,
       },
     });
   } catch (err) {
@@ -106,47 +106,47 @@ router.post(
     const testId = req.params.testId;
     const { answers, time_taken_seconds } = req.body;
 
-    const connection = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
       let score = 0;
 
-      const [questions] = await connection.query(
-        "SELECT id, correct_option FROM questions WHERE test_id = ?",
+      const questionsResult = await client.query(
+        "SELECT id, correct_option FROM questions WHERE test_id = $1",
         [testId]
       );
 
-      const [submissionResult] = await connection.query(
-        "INSERT INTO test_submissions (test_id, student_id, score, time_taken_seconds) VALUES (?, ?, ?, ?)",
+      const submissionResult = await client.query(
+        "INSERT INTO test_submissions (test_id, student_id, score, time_taken_seconds) VALUES ($1, $2, $3, $4) RETURNING id",
         [testId, req.user.id, 0, time_taken_seconds]
       );
 
-      const submissionId = submissionResult.insertId;
+      const submissionId = submissionResult.rows[0].id;
 
-      for (const q of questions) {
+      for (const q of questionsResult.rows) {
         const userAnswer = answers[q.id]; // answers = { questionId: selectedOption }
         const isCorrect = userAnswer === q.correct_option;
         if (isCorrect) score++;
 
-        await connection.query(
-          "INSERT INTO answers (submission_id, question_id, selected_option, is_correct) VALUES (?, ?, ?, ?)",
+        await client.query(
+          "INSERT INTO answers (submission_id, question_id, selected_option, is_correct) VALUES ($1, $2, $3, $4)",
           [submissionId, q.id, userAnswer, isCorrect]
         );
       }
 
-      await connection.query(
-        "UPDATE test_submissions SET score = ? WHERE id = ?",
+      await client.query(
+        "UPDATE test_submissions SET score = $1 WHERE id = $2",
         [score, submissionId]
       );
 
-      await connection.commit();
+      await client.query('COMMIT');
       res.status(201).json({ message: "Test submitted", score });
     } catch (err) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       res.status(500).json({ error: err.message });
     } finally {
-      connection.release();
+      client.release();
     }
   }
 );
@@ -158,23 +158,23 @@ router.get(
     const { testId, studentId } = req.params;
 
     try {
-      const [resultRows] = await pool.query(
-        "SELECT * FROM test_submissions WHERE test_id = ? AND student_id = ?",
+      const resultQuery = await pool.query(
+        "SELECT * FROM test_submissions WHERE test_id = $1 AND student_id = $2 ORDER BY submitted_at DESC LIMIT 1",
         [testId, studentId]
       );
 
-      if (resultRows.length === 0) {
+      if (resultQuery.rows.length === 0) {
         return res.status(404).json({ message: "No result found" });
       }
 
-      const result = resultRows[0];
+      const result = resultQuery.rows[0];
 
-      const [answers] = await pool.query(
-        "SELECT question_id, selected_option, is_correct FROM answers WHERE submission_id = ?",
+      const answersQuery = await pool.query(
+        "SELECT question_id, selected_option, is_correct FROM answers WHERE submission_id = $1",
         [result.id]
       );
 
-      res.json({ result, answers });
+      res.json({ result, answers: answersQuery.rows });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
