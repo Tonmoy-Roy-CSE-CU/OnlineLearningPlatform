@@ -1,31 +1,64 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
+const authRoutes = require('./routes/auth');
+const testRoutes = require('./routes/tests');
+const notesRoutes = require('./routes/notes');
+const blogRoutes = require('./routes/blogs'); // New blog routes
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const testRoutes = require('./routes/tests');
-const noteRoutes = require('./routes/notes');
-
-// Mount routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tests', testRoutes);
-app.use('/api/notes', noteRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/blogs', blogRoutes); // New blog routes
 
-// Default route
+// Health check
 app.get('/', (req, res) => {
-  res.send('API is running');
+    res.json({ 
+        message: 'Test API Server is running!',
+        features: [
+            'Authentication (JWT)',
+            'Test Management',
+            'Notes Management',
+            'Blog System', // Updated
+            'File Uploads'
+        ],
+        timestamp: new Date().toISOString()
+    });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
 });
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🔗 API Base URL: http://localhost:${PORT}`);
+    console.log(`📝 Available Features:`);
+    console.log(`   - Authentication: /api/auth`);
+    console.log(`   - Tests: /api/tests`);
+    console.log(`   - Notes: /api/notes`);
+    console.log(`   - Blogs: /api/blogs`); // New feature
+});
+
+module.exports = app;
