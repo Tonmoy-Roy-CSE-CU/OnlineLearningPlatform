@@ -6,7 +6,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const testRoutes = require('./routes/tests');
 const notesRoutes = require('./routes/notes');
-const blogRoutes = require('./routes/blogs'); // New blog routes
+const blogRoutes = require('./routes/blogs');
+const noticeRoutes = require('./routes/notices'); // New notice routes
 
 const app = express();
 
@@ -21,17 +22,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/tests', testRoutes);
 app.use('/api/notes', notesRoutes);
-app.use('/api/blogs', blogRoutes); // New blog routes
+app.use('/api/blogs', blogRoutes);
+app.use('/api/notices', noticeRoutes); // New notice routes
 
 // Health check
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'Test API Server is running!',
         features: [
             'Authentication (JWT)',
             'Test Management',
             'Notes Management',
-            'Blog System', // Updated
+            'Blog System',
+            'Notice Board System', // New feature
             'File Uploads'
         ],
         timestamp: new Date().toISOString()
@@ -58,7 +61,8 @@ app.listen(PORT, () => {
     console.log(`   - Authentication: /api/auth`);
     console.log(`   - Tests: /api/tests`);
     console.log(`   - Notes: /api/notes`);
-    console.log(`   - Blogs: /api/blogs`); // New feature
+    console.log(`   - Blogs: /api/blogs`);
+    console.log(`   - Notices: /api/notices`); // New feature
 });
 
 module.exports = app;
