@@ -8,6 +8,8 @@ const testRoutes = require('./routes/tests');
 const notesRoutes = require('./routes/notes');
 const blogRoutes = require('./routes/blogs');
 const noticeRoutes = require('./routes/notices'); // New notice routes
+const adminRoutes = require('./routes/admin'); // NEW: Admin routes
+
 
 const app = express();
 
@@ -24,6 +26,7 @@ app.use('/api/tests', testRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/notices', noticeRoutes); // New notice routes
+app.use('/api/admin', adminRoutes); // NEW: Mount admin routes
 
 // Health check
 app.get('/', (req, res) => {
@@ -35,7 +38,9 @@ app.get('/', (req, res) => {
             'Notes Management',
             'Blog System',
             'Notice Board System', // New feature
-            'File Uploads'
+            'File Uploads',
+            'Admin Dashboard & Management' // NEW
+
         ],
         timestamp: new Date().toISOString()
     });
@@ -63,6 +68,8 @@ app.listen(PORT, () => {
     console.log(`   - Notes: /api/notes`);
     console.log(`   - Blogs: /api/blogs`);
     console.log(`   - Notices: /api/notices`); // New feature
+    console.log(`👑 Admin Dashboard: /api/admin/*`);
+
 });
 
 module.exports = app;
