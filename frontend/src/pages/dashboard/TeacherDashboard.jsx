@@ -1,4 +1,4 @@
-// pages/dashboard/TeacherDashboard.js
+// pages/dashboard/TeacherDashboard.js - Fixed API calls
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import testService from '../../services/testService';
@@ -19,6 +19,7 @@ const TeacherDashboard = () => {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -26,21 +27,61 @@ const TeacherDashboard = () => {
 
   const fetchDashboardData = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      // Fetch statistics and recent activities
-      const [testsResponse, notesResponse, blogsResponse, noticesResponse] = await Promise.all([
-        testService.getMyTests().catch(() => ({ tests: [] })),
-        notesService.getNotes().catch(() => ({ notes: [] })),
-        blogService.getMyBlogs().catch(() => ({ blogs: [] })),
-        noticeService.getMyNotices().catch(() => ({ notices: [] }))
+      // Fetch all data with proper error handling
+      console.log('Fetching dashboard data...');
+      
+      const [testsResponse, notesResponse, blogsResponse, noticesResponse] = await Promise.allSettled([
+        testService.getMyTests(),
+        notesService.getNotes(),
+        blogService.getMyBlogs(),
+        noticeService.getMyNotices()
       ]);
 
-      // Calculate stats
-      const myTests = testsResponse.tests || [];
-      const myNotes = notesResponse.notes?.filter(note => note.uploaded_by === user.id) || [];
-      const myBlogs = blogsResponse.blogs || [];
-      const myNotices = noticesResponse.notices || [];
+      console.log('API Responses:', {
+        tests: testsResponse,
+        notes: notesResponse,
+        blogs: blogsResponse,
+        notices: noticesResponse
+      });
 
+      // Handle tests
+      let myTests = [];
+      if (testsResponse.status === 'fulfilled' && testsResponse.value?.tests) {
+        myTests = testsResponse.value.tests;
+      } else if (testsResponse.status === 'rejected') {
+        console.error('Tests fetch failed:', testsResponse.reason);
+      }
+
+      // Handle notes - filter by current user since backend returns all notes
+      let myNotes = [];
+      if (notesResponse.status === 'fulfilled' && notesResponse.value?.notes) {
+        myNotes = notesResponse.value.notes.filter(note => 
+          note.uploaded_by === user.id || note.uploaded_by_name === user.name
+        );
+      } else if (notesResponse.status === 'rejected') {
+        console.error('Notes fetch failed:', notesResponse.reason);
+      }
+
+      // Handle blogs
+      let myBlogs = [];
+      if (blogsResponse.status === 'fulfilled' && blogsResponse.value?.blogs) {
+        myBlogs = blogsResponse.value.blogs;
+      } else if (blogsResponse.status === 'rejected') {
+        console.error('Blogs fetch failed:', blogsResponse.reason);
+      }
+
+      // Handle notices
+      let myNotices = [];
+      if (noticesResponse.status === 'fulfilled' && noticesResponse.value?.notices) {
+        myNotices = noticesResponse.value.notices;
+      } else if (noticesResponse.status === 'rejected') {
+        console.error('Notices fetch failed:', noticesResponse.reason);
+      }
+
+      // Calculate stats
       setStats({
         tests: myTests.length,
         notes: myNotes.length,
@@ -48,41 +89,67 @@ const TeacherDashboard = () => {
         notices: myNotices.length
       });
 
-      // Combine recent activities
-      const activities = [
-        ...myTests.slice(0, 3).map(test => ({
+      // Combine recent activities with safe date parsing
+      const activities = [];
+      
+      // Add tests to activities
+      myTests.slice(0, 3).forEach(test => {
+        activities.push({
           id: `test-${test.id}`,
           type: 'test',
           title: test.title,
-          date: test.created_at,
+          date: test.created_at || new Date().toISOString(),
           icon: 'academic-cap'
-        })),
-        ...myNotes.slice(0, 3).map(note => ({
+        });
+      });
+
+      // Add notes to activities
+      myNotes.slice(0, 3).forEach(note => {
+        activities.push({
           id: `note-${note.id}`,
           type: 'note',
           title: note.title,
-          date: note.uploaded_at,
+          date: note.uploaded_at || new Date().toISOString(),
           icon: 'book-open'
-        })),
-        ...myBlogs.slice(0, 3).map(blog => ({
+        });
+      });
+
+      // Add blogs to activities
+      myBlogs.slice(0, 3).forEach(blog => {
+        activities.push({
           id: `blog-${blog.id}`,
           type: 'blog',
           title: blog.title,
-          date: blog.created_at,
+          date: blog.created_at || new Date().toISOString(),
           icon: 'document-text'
-        })),
-        ...myNotices.slice(0, 3).map(notice => ({
+        });
+      });
+
+      // Add notices to activities
+      myNotices.slice(0, 3).forEach(notice => {
+        activities.push({
           id: `notice-${notice.id}`,
           type: 'notice',
           title: notice.title,
-          date: notice.posted_at,
+          date: notice.posted_at || new Date().toISOString(),
           icon: 'speakerphone'
-        }))
-      ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+        });
+      });
 
-      setRecentActivities(activities);
+      // Sort by date and limit to 8 most recent
+      const sortedActivities = activities
+        .sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB - dateA;
+        })
+        .slice(0, 8);
+
+      setRecentActivities(sortedActivities);
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setError('Failed to load dashboard data. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -121,6 +188,18 @@ const TeacherDashboard = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return 'Unknown date';
+    }
+  };
+
+  const handleRetry = () => {
+    fetchDashboardData();
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -129,6 +208,17 @@ const TeacherDashboard = () => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
         <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
         <p className="text-blue-100">Here's what's happening in your classroom today.</p>
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <p className="text-sm">{error}</p>
+            <button 
+              onClick={handleRetry}
+              className="mt-2 text-sm underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -277,7 +367,7 @@ const TeacherDashboard = () => {
                     {activity.title}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} • {new Date(activity.date).toLocaleDateString()}
+                    {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} • {formatDate(activity.date)}
                   </p>
                 </div>
               </div>
@@ -285,6 +375,7 @@ const TeacherDashboard = () => {
           ) : (
             <div className="px-6 py-8 text-center">
               <p className="text-gray-500">No recent activities</p>
+              <p className="text-sm text-gray-400 mt-1">Start creating content to see your activity here</p>
             </div>
           )}
         </div>

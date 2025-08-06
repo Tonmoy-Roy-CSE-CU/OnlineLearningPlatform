@@ -725,78 +725,128 @@ router.get(
     }
   }
 );
+// Add this route to your tests.js file (around line 200, after existing routes)
 
-// ===== ADMIN ANALYTICS =====
 
-// Get comprehensive test analytics (admin only)
-router.get(
-  "/admin/comprehensive-analytics",
-  authenticateToken,
-  authorizeRoles("admin"),
-  async (req, res) => {
-    try {
-      const timeRange = req.query.range || "30"; // days
+// Get tests created by current teacher (for teacher dashboard) - SIMPLIFIED VERSION
+router.get('/my/tests', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    console.log('Fetching tests for teacher ID:', teacherId);
 
-      // Overall platform statistics
-      const overallStatsQuery = `
-            SELECT 
-                COUNT(DISTINCT t.id) as total_tests,
-                COUNT(ts.id) as total_submissions,
-                COUNT(DISTINCT ts.student_id) as unique_students,
-                COUNT(DISTINCT t.teacher_id) as active_teachers,
-                ROUND(AVG(ts.score::decimal / (
-                    SELECT COUNT(*) FROM questions WHERE test_id = t.id
-                ) * 100), 2) as platform_average_percentage
-            FROM tests t
-            LEFT JOIN test_submissions ts ON t.id = ts.test_id
-            WHERE t.created_at >= NOW() - INTERVAL '${timeRange} days'
-        `;
 
-      // Teacher activity
-      const teacherActivityQuery = `
-            SELECT 
-                u.name as teacher_name,
-                COUNT(DISTINCT t.id) as tests_created,
-                COUNT(ts.id) as total_submissions_received,
-                ROUND(AVG(ts.score::decimal / (
-                    SELECT COUNT(*) FROM questions WHERE test_id = t.id
-                ) * 100), 2) as average_class_performance
-            FROM users u
-            LEFT JOIN tests t ON u.id = t.teacher_id
-            LEFT JOIN test_submissions ts ON t.id = ts.test_id
-            WHERE u.role = 'teacher' AND t.created_at >= NOW() - INTERVAL '${timeRange} days'
-            GROUP BY u.id, u.name
-            HAVING COUNT(t.id) > 0
-            ORDER BY tests_created DESC
-        `;
+    // Ultra-simple query first - just get the basic test data
+    const query = `
+      SELECT
+        id,
+        title,
+        description,
+        test_link,
+        duration_minutes,
+        created_at
+      FROM tests
+      WHERE teacher_id = $1
+      ORDER BY created_at DESC
+    `;
 
-      // Test creation trends
-      const trendQuery = `
-            SELECT 
-                DATE(created_at) as date,
-                COUNT(*) as tests_created
-            FROM tests
-            WHERE created_at >= NOW() - INTERVAL '${timeRange} days'
-            GROUP BY DATE(created_at)
-            ORDER BY date DESC
-        `;
 
-      const [overallResult, teacherResult, trendResult] = await Promise.all([
-        pool.query(overallStatsQuery),
-        pool.query(teacherActivityQuery),
-        pool.query(trendQuery),
-      ]);
+    const result = await pool.query(query, [teacherId]);
+    console.log('Query result:', result.rows);
 
-      res.json({
-        time_range_days: timeRange,
-        overall_stats: overallResult.rows[0],
-        teacher_activity: teacherResult.rows,
-        creation_trends: trendResult.rows,
-      });
-    } catch (error) {
-      console.error("Error fetching comprehensive analytics:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
+
+    // Add additional data separately to avoid complex joins
+    const testsWithStats = await Promise.all(
+      result.rows.map(async (test) => {
+        try {
+          // Get question count
+          const questionCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM questions WHERE test_id = $1',
+            [test.id]
+          );
+         
+          // Get submission count
+          const submissionCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM test_submissions WHERE test_id = $1',
+            [test.id]
+          );
+         
+          // Get unique students count
+          const uniqueStudentsResult = await pool.query(
+            'SELECT COUNT(DISTINCT student_id) as count FROM test_submissions WHERE test_id = $1',
+            [test.id]
+          );
+
+
+          return {
+            ...test,
+            question_count: parseInt(questionCountResult.rows[0].count),
+            submission_count: parseInt(submissionCountResult.rows[0].count),
+            unique_students: parseInt(uniqueStudentsResult.rows[0].count),
+            average_percentage: 0 // Will calculate this later if needed
+          };
+        } catch (err) {
+          console.error('Error getting stats for test', test.id, err);
+          return {
+            ...test,
+            question_count: 0,
+            submission_count: 0,
+            unique_students: 0,
+            average_percentage: 0
+          };
+        }
+      })
+    );
+
+
+    res.json({
+      tests: testsWithStats
+    });
+  } catch (error) {
+    console.error('Error fetching teacher tests:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+      stack: error.stack
+    });
   }
-);
+});
+
+
+// Alternative even simpler version if you still have issues
+router.get('/my/tests/simple', authenticateToken, authorizeRoles('teacher'), async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+
+
+    const query = `
+      SELECT
+        t.id,
+        t.title,
+        t.description,
+        t.test_link,
+        t.duration_minutes,
+        t.created_at,
+        (SELECT COUNT(*) FROM questions WHERE test_id = t.id) as question_count,
+        (SELECT COUNT(*) FROM test_submissions WHERE test_id = t.id) as submission_count,
+        (SELECT COUNT(DISTINCT student_id) FROM test_submissions WHERE test_id = t.id) as unique_students
+      FROM tests t
+      WHERE t.teacher_id = $1
+      ORDER BY t.created_at DESC
+    `;
+
+
+    const result = await pool.query(query, [teacherId]);
+
+
+    res.json({
+      tests: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching teacher tests (simple):', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
 module.exports = router;
+
+
+

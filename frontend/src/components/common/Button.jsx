@@ -1,89 +1,47 @@
+// components/common/Button.jsx
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 
 const Button = ({
   children,
-  type = 'button',
   variant = 'primary',
-  size = 'md',
+  size = 'medium',
   disabled = false,
   loading = false,
-  leftIcon = null,
-  rightIcon = null,
-  className = '',
-  fullWidth = false,
   onClick,
+  type = 'button',
+  className = '',
+  icon: Icon,
   ...props
 }) => {
-  // Base button classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  // Variant classes
-  const variantClasses = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 border border-transparent',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 border border-transparent',
-    success: 'bg-success-600 text-white hover:bg-success-700 focus:ring-success-500 border border-transparent',
-    warning: 'bg-warning-600 text-white hover:bg-warning-700 focus:ring-warning-500 border border-transparent',
-    danger: 'bg-error-600 text-white hover:bg-error-700 focus:ring-error-500 border border-transparent',
-    outline: 'bg-white text-gray-700 hover:bg-gray-50 focus:ring-primary-500 border border-gray-300',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-primary-500 border border-transparent',
-    link: 'bg-transparent text-primary-600 hover:text-primary-700 focus:ring-primary-500 border border-transparent shadow-none p-0',
+  const variants = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
   };
 
-  // Size classes
-  const sizeClasses = {
-    xs: 'px-2.5 py-1.5 text-xs',
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-4 py-2 text-base',
-    xl: 'px-6 py-3 text-base',
+  const sizes = {
+    small: 'px-3 py-1.5 text-sm',
+    medium: 'px-4 py-2 text-sm',
+    large: 'px-6 py-3 text-base',
   };
 
-  // Width classes
-  const widthClasses = fullWidth ? 'w-full' : '';
-
-  // Combine all classes
-  const buttonClasses = [
-    baseClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    widthClasses,
-    className,
-  ].filter(Boolean).join(' ');
-
-  // Handle click with loading state
-  const handleClick = (e) => {
-    if (loading || disabled) {
-      e.preventDefault();
-      return;
-    }
-    if (onClick) {
-      onClick(e);
-    }
-  };
+  const baseClasses = 'inline-flex items-center justify-center border border-transparent rounded-md shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <button
       type={type}
-      className={buttonClasses}
+      onClick={onClick}
       disabled={disabled || loading}
-      onClick={handleClick}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
-      {/* Left icon or loading spinner */}
       {loading ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-      ) : leftIcon ? (
-        <span className="mr-2">{leftIcon}</span>
-      ) : null}
-
-      {/* Button content */}
-      <span>{children}</span>
-
-      {/* Right icon */}
-      {rightIcon && !loading && (
-        <span className="ml-2">{rightIcon}</span>
+        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+      ) : (
+        Icon && <Icon className="h-4 w-4 mr-2" />
       )}
+      {children}
     </button>
   );
 };
