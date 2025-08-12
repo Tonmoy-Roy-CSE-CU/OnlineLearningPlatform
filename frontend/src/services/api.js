@@ -87,6 +87,10 @@ class ApiService {
     getAnalytics: async () => {
       return this.request('/tests/my/analytics');
     },
+
+    getResultDetails: async (submissionId) => {
+      return apiService.request(`/tests/submission/${submissionId}/detailed`);
+    }
   };
 
   // Notes endpoints

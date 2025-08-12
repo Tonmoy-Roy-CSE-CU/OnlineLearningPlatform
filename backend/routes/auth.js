@@ -155,7 +155,84 @@ router.post('/register', async (req, res) => {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+    
 });
+// Add this route to your existing auth.js backend file
 
+// Token verification route
+router.get('/verify', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        // Verify JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Get fresh user data from database (including status)
+        const userResult = await db.query(
+            'SELECT id, name, email, role, status FROM users WHERE id = $1',
+            [decoded.id]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+
+        // Check user status
+        switch (user.status) {
+            case 'banned':
+                return res.status(403).json({ 
+                    error: 'Account banned',
+                    code: 'ACCOUNT_BANNED'
+                });
+            
+            case 'pending':
+                return res.status(403).json({ 
+                    error: 'Account pending approval',
+                    code: 'ACCOUNT_PENDING'
+                });
+            
+            case 'approved':
+                // Token and user are valid
+                break;
+            
+            default:
+                return res.status(403).json({ 
+                    error: 'Invalid account status',
+                    code: 'INVALID_STATUS'
+                });
+        }
+
+        res.json({
+            message: 'Token valid',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: user.status
+            }
+        });
+
+    } catch (error) {
+        console.error('Token verification error:', error);
+        
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expired' });
+        }
+        
+        res.status(500).json({ error: 'Token verification failed' });
+    }
+});
 module.exports = router;
 

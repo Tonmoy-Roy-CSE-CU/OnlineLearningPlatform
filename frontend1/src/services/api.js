@@ -67,6 +67,13 @@ export const api = {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return res.json();
+    },
+    getResultDetails: async (submissionId, token) => {
+      const res = await fetch(`${API_BASE}/tests/submission/${submissionId}/detailed`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch result details');
+      return res.json();
     }
   },
   notes: {

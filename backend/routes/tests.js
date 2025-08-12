@@ -141,7 +141,11 @@ router.post(
       );
 
       await client.query("COMMIT");
-      res.status(201).json({ message: "Test submitted", score });
+      res.status(201).json({
+        message: "Test submitted",
+        score,
+        submission_id: submissionId
+      });
     } catch (err) {
       await client.query("ROLLBACK");
       res.status(500).json({ error: err.message });
