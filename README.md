@@ -19,7 +19,7 @@ This project is developed with **ReactJS (frontend)**, **Node.js + Express (back
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the Repository
-git clone https://github.com/Tonmoy-Roy-CSE-CU/OnlineLearningPlatform.git
+git clone https://github.com/Tonmoy-Roy-CSE-CU/OnlineLearningPlatform/tree/master.git
 cd OnlineLearningPlatform
 
 ### 2️⃣ Install PostgreSQL
@@ -124,3 +124,4 @@ Open in browser:
 | Student | [student@example.com](mailto:student@example.com) | 123456   |
 
 (If these are not in the DB yet, they can register.)
+
