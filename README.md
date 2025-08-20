@@ -1,135 +1,126 @@
 # 📚 Online Learning Platform
 
-## Overview
-The **Online Learning Platform** is a web-based application developed using **ReactJS**, **NodeJS**, **ExpressJS**, and **MySQL**, designed to enhance online learning and collaboration between teachers and students.
+The **Online Learning Platform** is a web-based application that enables teachers and students to collaborate in a digital environment.  
+It provides features like **MCQ test creation & participation, notes sharing, notice board announcements, and a blog system** for interaction.  
 
-The platform includes:
-- **MCQ test creation & participation** with unique access links.
-- **Automated result analysis** for both teachers and students.
-- **Notes and file sharing** for study materials.
-- **Blog system** for academic discussions.
-- **Notice board** for important announcements.
-
-Teachers can:
-- Create and share tests.
-- Analyze student performance.
-- Upload study notes and files.
-- Post notices.
-- Write and comment on blogs.
-
-Students can:
-- Access tests via shared links.
-- View their test results.
-- Download study notes.
-- Read and write blogs.
-- Comment on others’ blogs.
-- View notices.
+This project is developed with **ReactJS (frontend)**, **Node.js + Express (backend)**, and **PostgreSQL (database)**.  
 
 ---
 
-## 🛠 Installation & Setup Instructions
-Follow these steps to run the application locally:
+## 🚀 Features
+- 👤 **User Management** (registration, login, role-based access: teacher/student)  
+- 📝 **Test Management** (MCQ tests, unique links, auto evaluation, result analysis)  
+- 📂 **Notes & File Sharing** (upload by teachers, download by students)  
+- 📢 **Notice Board** (important announcements from teachers)  
+- 📰 **Blog System** (teachers & students can write, comment, and interact)  
+
+---
+
+## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the Repository
-git clone https://github.com/your-username/online-learning-platform.git
-cd online-learning-platform
+git clone https://github.com/Tonmoy-Roy-CSE-CU/OnlineLearningPlatform.git
+cd OnlineLearningPlatform
 
+### 2️⃣ Install PostgreSQL
+Download & install from: [PostgreSQL Download](https://www.postgresql.org/download/windows/)
+* User: `postgres`
+* Password: `yourpassword` (must match `.env`)
 
-### 2️⃣ Install Dependencies
-The project has separate **frontend** and **backend** folders. Install dependencies for each.
+### 3️⃣ Setup Database
+Create the database:
+```bash
+createdb -U postgres olpm
+```
 
-#### Frontend:
-cd frontend
-npm install
+Import schema & data (if you have `olpm.sql`):
+```bash
+psql -U postgres -d olpm -f backend/olpm.sql
+```
 
-#### Backend:
-cd ../backend
-npm install
+---
 
-
-### 3️⃣ Configure Environment Variables
-Create a `.env` file inside the **backend** folder and set the following:
-
-PORT=5000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=yourpassword
-DB_NAME=online_learning
-JWT_SECRET=your_jwt_secret
-
-### 4️⃣ Setup the Database
-* Create a MySQL database named **online\_learning**.
-* Run the SQL migration script (if provided) to set up tables.
-
-### 5️⃣ Start the Application
-
-#### Start Backend:
+## 🧪 Backend Setup
+```bash
 cd backend
-npm start
+npm install
+```
 
-#### Start Frontend:
-cd ../frontend
-npm start
+Create `.env` inside `backend/`:
+```env
+PORT=5000
 
-By default:
-* **Frontend** runs on `http://localhost:3000`
-* **Backend API** runs on `http://localhost:5000`
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=olpm
+
+JWT_SECRET=your_jwt_secret
+```
+
+Run backend:
+```bash
+node server.js
+```
+
+---
+
+## 🎨 Frontend Setup
+```bash
+cd ../frontend1
+npm install
+```
+
+Create `.env` inside `frontend1/`:
+```env
+VITE_API_BASE=http://localhost:5000/api
+```
+
+Run frontend:
+```bash
+npm run dev
+```
+
+Open in browser:
+👉 [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## 📦 Dependencies & Requirements
 
-### Frontend:
-* **ReactJS**
-* **React Router**
-* **Tailwind CSS / Material UI / Bootstrap**
-* **React Hook Form / Formik**
-
-### Backend:
-* **NodeJS**
-* **ExpressJS**
-* **MySQL**
-* **Sequelize / KnexJS** (optional)
-* **JWT** for authentication
-* **bcrypt** for password hashing
-
-### Other Tools:
-* **Git** for version control
-* **Postman** for API testing
-* **Vercel / Netlify** (frontend hosting)
-* **Render / Railway / Heroku** (backend hosting)
+| Tool       | Required Version | Notes                  |
+| ---------- | ---------------- | ---------------------- |
+| Node.js    | v18+             | For frontend & backend |
+| PostgreSQL | v13+             | Database               |
+| Git        | Any              | Version control        |
+| pgAdmin    | Optional         | DB management          |
 
 ---
 
-## ▶ Running the Application Locally
-1. Ensure **NodeJS** and **MySQL** are installed on your system.
-2. Start **MySQL server** and ensure the database is configured.
-3. Run backend and frontend servers as per instructions above.
-4. Open `http://localhost:3000` in your browser.
-5. Register as a teacher or student to start using the platform.
+## ▶️ Running Locally
+
+1. Start PostgreSQL and ensure `olpm` DB is imported.
+2. Start backend:
+   ```bash
+   cd backend
+   node server.js
+   ```
+3. Start frontend:
+   ```bash
+   cd frontend1
+   npm run dev
+   ```
+4. Visit [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 📌 Features
-* User authentication (Teacher/Student roles)
-* MCQ test creation, participation, and evaluation
-* Result reporting & analytics
-* Notes and file sharing
-* Notice board announcements
-* Blog creation, reading, and commenting
-* Secure file uploads
-* Responsive design for mobile & desktop
+## 👤 Sample Credentials (Demo)
 
----
+| Role    | Email                                             | Password |
+| ------- | ------------------------------------------------- | -------- |
+| Admin   | [admin@example.com](mailto:admin@example.com)     | 123456   |
+| Teacher | [teacher@example.com](mailto:teacher@example.com) | 123456   |
+| Student | [student@example.com](mailto:student@example.com) | 123456   |
 
-## 🔒 Security
-* Role-based access control
-* JWT authentication
-* Password hashing with bcrypt
-* Input validation & sanitization
-* HTTPS support in production
-
----
-
-## 📄 License
-This project is for educational purposes under the Web Engineering Lab \[CSE-616].
+(If these are not in the DB yet, they can register.)
