@@ -5,7 +5,7 @@ import {
   Activity, Database, HardDrive, Clock, TrendingUp, Eye, Edit,
   CheckCircle, XCircle, UserCheck, UserX, Search, Filter
 } from 'lucide-react';
-import { api } from '../../services/api';
+import { api } from '../../api';
 
 const AdminDashboard = ({ user, token }) => {
   const [activeTab, setActiveTab] = useState('dashboard');

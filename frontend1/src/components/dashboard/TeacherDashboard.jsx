@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Home, TestTube, BarChart3, FileText, BookOpen, Bell, Plus, Upload, Trash2, Download, Heart, MessageCircle, Users } from 'lucide-react';
-import { api, API_BASE_URL } from '../../services/api';
+import { api, API_BASE_URL } from '../../api';
 
 const TeacherDashboard = ({ user, token }) => {
   const [activeTab, setActiveTab] = useState('dashboard');

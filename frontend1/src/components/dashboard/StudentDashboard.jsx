@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // Import the actual API functions
-import { api } from '../../services/api';
+import { api } from '../../api';
 
 // Enhanced Timer Component with visual indicators
 const Timer = ({ duration, onTimeUp, isActive, onTick, isPaused = false }) => {
