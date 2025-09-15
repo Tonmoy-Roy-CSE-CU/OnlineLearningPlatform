@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuthContext } from './contexts/AuthContext';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
 import Header from './components/Layout/Header';
 import StudentDashboard from './components/dashboard/StudentDashboard';
 import TeacherDashboard from './components/dashboard/TeacherDashboard';
