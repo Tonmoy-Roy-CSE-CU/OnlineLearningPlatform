@@ -10,7 +10,6 @@ const blogRoutes = require('./routes/blogs');
 const noticeRoutes = require('./routes/notices'); // New notice routes
 const adminRoutes = require('./routes/admin'); // NEW: Admin routes
 
-
 const app = express();
 
 // Middleware
@@ -18,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 // Static file serving for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -40,7 +39,6 @@ app.get('/', (req, res) => {
             'Notice Board System', // New feature
             'File Uploads',
             'Admin Dashboard & Management' // NEW
-
         ],
         timestamp: new Date().toISOString()
     });
@@ -69,7 +67,6 @@ app.listen(PORT, () => {
     console.log(`   - Blogs: /api/blogs`);
     console.log(`   - Notices: /api/notices`); // New feature
     console.log(`👑 Admin Dashboard: /api/admin/*`);
-
 });
 
 module.exports = app;
