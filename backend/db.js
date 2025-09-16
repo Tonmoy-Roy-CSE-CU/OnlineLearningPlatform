@@ -1,19 +1,15 @@
 // db.js
-const { Pool } = require("pg");
-require("dotenv").config();
-
-const isProduction = process.env.NODE_ENV === "production";
+const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false, // Neon requires SSL in prod
-  max: parseInt(process.env.PG_MAX_CLIENTS || "6", 10),      // safe defaults for serverless
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 5432,
+  max: 10, // maximum number of clients in the pool
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
-
-pool.on("error", (err) => {
-  console.error("Unexpected error on idle client", err);
+  connectionTimeoutMillis: 2000,
 });
 
 module.exports = pool;
