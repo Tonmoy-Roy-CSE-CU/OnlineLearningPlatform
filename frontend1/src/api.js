@@ -1,6 +1,6 @@
 // api.js
 // API Configuration
-const API_BASE = import.meta.env.VITE_API_URL || 'https://olpm-backend.onrender.com/api';
+const API_BASE = 'https://olpm-backend.onrender.com/api';
 
 // API Helper Functions
 export const api = {
@@ -222,9 +222,9 @@ export const api = {
       try {
         const res = await fetch(`${API_BASE}/blogs/${id}/comments`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ content }),
           credentials: 'include',
@@ -255,9 +255,9 @@ export const api = {
       try {
         const res = await fetch(`${API_BASE}/notices/create`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify(noticeData),
           credentials: 'include',
