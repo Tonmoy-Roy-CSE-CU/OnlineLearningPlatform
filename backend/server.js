@@ -19,8 +19,8 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://frontend-82qb.onrender.com',
-    'https://backend-lzma.onrender.com' // Replace with your actual backend URL
+    'https://olpm-frontend.onrender.com',
+    'https://olpm-backend.onrender.com/' // Replace with your actual backend URL
   ],
   credentials: true
 }));
