@@ -14,7 +14,15 @@ const adminRoutes = require('./routes/admin'); // NEW: Admin routes
 const app = express();
 
 // Middleware
-app.use(cors());
+// Update CORS configuration to include your Render backend URL
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://frontend-82qb.onrender.com',
+    'https://your-backend-app-name.onrender.com'  // Add this
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Static file serving for uploads

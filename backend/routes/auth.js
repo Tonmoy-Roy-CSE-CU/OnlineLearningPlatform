@@ -158,7 +158,21 @@ router.post('/register', async (req, res) => {
 
 });
 // Add this route to your existing auth.js backend file
-
+// Add to routes/auth.js
+router.get('/testdb', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ 
+      message: 'Database connected successfully',
+      timestamp: result.rows[0].now 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Database connection failed',
+      details: error.message 
+    });
+  }
+});
 // Token verification route
 router.get('/verify', async (req, res) => {
     try {
