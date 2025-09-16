@@ -13,7 +13,11 @@ const adminRoutes = require('./routes/admin'); // NEW: Admin routes
 const app = express();
 
 // Middleware
-app.use(cors({origin: "https://backend-lzma.onrender.com/"}));
+app.use(cors({origin: [
+    'http://localhost:3000',
+    'https://frontend-82qb.onrender.com'
+  ],
+  credentials: true}));
 app.use(express.json());
 
 // Static file serving for uploads
