@@ -68,7 +68,7 @@ const Login = ({ onLogin, switchToRegister }) => {
             Sign in to OLPM
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Online Learning and Practice Management
+            Online Learning Platform Management
           </p>
         </div>
         
